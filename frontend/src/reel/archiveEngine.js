@@ -107,11 +107,6 @@ export class ArchiveEngine {
     };
     this.frameHandle=requestAnimationFrame(loop);
   }
-  skipIntro(){
-    if(this.introComplete||this.disposed)return;
-    this.introElapsed=this.introDuration;
-    this.aperture.finish();
-  }
   stop(){this.running=false;cancelAnimationFrame(this.frameHandle);this.frameHandle=0;}
   dispose(){
     if(this.disposed)return;
