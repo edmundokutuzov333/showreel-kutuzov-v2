@@ -63,8 +63,17 @@ export class SpatialAccents{
     const attr=this.geometry.attributes.position;
     for(let i=0;i<partners.length;i++){
       const end=positions[partners[i]];
-      attr.setXYZ(i*2, this.tmp.x,this.tmp.y,this.tmp.z);
-      attr.setXYZ(i*2+1,end.x,end.y,end.z);
+      // Keep each connection behind billboard surfaces so original pixels
+      // remain unobscured, including when passing through an artwork.
+      const back=.075;
+      attr.setXYZ(i*2,
+        this.tmp.x+this.forward.x*back,
+        this.tmp.y+this.forward.y*back,
+        this.tmp.z+this.forward.z*back);
+      attr.setXYZ(i*2+1,
+        end.x+this.forward.x*back,
+        end.y+this.forward.y*back,
+        end.z+this.forward.z*back);
     }
     this.geometry.setDrawRange(0,partners.length*2);
     attr.needsUpdate=true;
