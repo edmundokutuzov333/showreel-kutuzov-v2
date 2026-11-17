@@ -4,6 +4,8 @@ import { Cloud } from "./cloud";
 import { Explore } from "./explore";
 import { HighResLayer } from "./highResLayer";
 import { ApertureSequence } from "./apertureSequence";
+import { SpatialAccents } from "./spatialAccents";
+import { LivingFrames } from "./livingFrames";
 import { introDuration, clamp01 } from "./apertureTimeline";
 
 /**
@@ -49,6 +51,8 @@ export class ArchiveEngine {
     this.explore.yaw=.6;
     this.mobile=window.matchMedia("(pointer:coarse)").matches;
     this.reduced=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+    this.accents=new SpatialAccents(this.scene,{mobile:this.mobile,reduced:this.reduced});
+    this.living=new LivingFrames(this.cloud,this.scene,{mobile:this.mobile,reduced:this.reduced});
     this.aperture=new ApertureSequence(this.scene,this.camera);
     this.introDuration=introDuration({returning,reduced:this.reduced});
     this.introElapsed=this.reduced?this.introDuration:0;
@@ -114,6 +118,8 @@ export class ArchiveEngine {
     this.stop();this.disposed=true;
     this.observer.disconnect();
     document.removeEventListener("visibilitychange",this.onVisibility);
+    this.living.dispose();
+    this.accents.dispose();
     this.details.dispose();
     this.aperture.dispose();
     this.cloud.meshes.forEach(m=>{m.geometry.dispose();m.material.dispose();});
