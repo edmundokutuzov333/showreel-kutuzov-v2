@@ -13,25 +13,29 @@ const Stage=forwardRef(function Stage({r},ref){
   return <section ref={ref} data-testid="reel-stage"
     className="cinema-stage cinema-stage--explore"
     aria-label="Exploração interactiva do arquivo de arte"
-    onPointerMove={e=>r.pointer("move",...pos(e))}
+    onPointerMove={e=>{if(!pinch.current)r.pointer("move",...pos(e));}}
     onPointerDown={e=>{
-      if(!r.introComplete||!e.isPrimary||(e.button!==undefined&&e.button!==0))return;
+      if(!r.introComplete||pinch.current||!e.isPrimary||(e.button!==undefined&&e.button!==0))return;
       if(e.target.tagName!=="CANVAS"&&e.target!==e.currentTarget)return;
       e.currentTarget.setPointerCapture?.(e.pointerId);
       r.pointer("down",...pos(e),e.pointerType);
     }}
     onPointerUp={e=>{
       if(!r.introComplete||!e.isPrimary)return;
-      r.pointer("up",...pos(e),e.pointerType);
+      if(pinch.current)r.pointer("leave",0,0);
+      else r.pointer("up",...pos(e),e.pointerType);
       if(e.currentTarget.hasPointerCapture?.(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
     }}
     onPointerCancel={()=>r.pointer("leave",0,0)}
     onPointerLeave={()=>r.pointer("leave",0,0)}
     onWheel={e=>{if(r.introComplete){e.preventDefault();r.pointer("wheel",0,0,e.deltaY);}}}
     onTouchStart={e=>{
-      if(e.touches.length===2)pinch.current=Math.hypot(
-        e.touches[0].clientX-e.touches[1].clientX,
-        e.touches[0].clientY-e.touches[1].clientY);
+      if(e.touches.length===2){
+        pinch.current=Math.hypot(
+          e.touches[0].clientX-e.touches[1].clientX,
+          e.touches[0].clientY-e.touches[1].clientY);
+        r.pointer("leave",0,0); // pinch must never be interpreted as a tap
+      }
     }}
     onTouchMove={e=>{
       if(e.touches.length!==2||!pinch.current||!r.introComplete)return;
