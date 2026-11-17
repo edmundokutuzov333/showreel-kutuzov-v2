@@ -14,7 +14,7 @@ The opening and exploration now share the **same Three.js scene, camera, canvas 
 4. The camera interpolates to the archive's exact home position; the last intro frame and the first interactive frame have identical positions and visibility.
 5. Only after that rendered frame do the filters, drag/zoom controls and selected-work overlays become interactive.
 
-Default opening duration: **3.25 seconds after assets are ready**. Returning visitors get **1.35 seconds**, using an optional localStorage flag. Users may skip with the visible button or Escape/Enter. Reduced-motion preference presents the static archive without flying camera movement.
+Default opening duration: **3.25 seconds after assets are ready**. Returning visitors get **1.35 seconds**, using an optional localStorage flag. **The opening cannot be skipped.** Reduced-motion preference presents the static archive without flying camera movement.
 
 The previous Dither Flow and Unicorn Studio components remain in the codebase as legacy references, but they are not mounted in the current intro; this avoids a competing GPU canvas.
 
@@ -49,3 +49,8 @@ GitHub Actions runs `.github/workflows/archive-quality.yml` for the feature bran
 - Vercel project: `showreel-kutuzov-v2`, team `KUTUZOV`
 - Vercel project root: `frontend`
 - The original `showreel-kutuzov` and `kutuzovportfolio333` remain independent.
+
+## Latest archive interactions
+The exhibition also supports short category-relative 3D connections and lighting, quiet idle orbit, distance-dependent image emphasis, one muted desktop video preview at a time, a compact next-work rail with catalogue atlas thumbnails, category/project-aware transitions, precise click/touch raycasting and an exact return-to-discovery camera snapshot. Mobile and data-saving contexts retain lightweight static video posters. No additional content pages or paid AI services are required.
+
+See [technical compatibility and quality checks](docs/ARCHIVE_V2_NINE_IMPROVEMENTS.md).
