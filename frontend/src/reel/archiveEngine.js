@@ -3,6 +3,8 @@ import { C } from "./core";
 import { Cloud } from "./cloud";
 import { Explore } from "./explore";
 import { HighResLayer } from "./highResLayer";
+import { ApertureSequence } from "./apertureSequence";
+import { introDuration, clamp01 } from "./apertureTimeline";
 
 /**
  * Standalone, single-pass WebGL archive. No film timeline, score,
@@ -24,7 +26,7 @@ export function getRenderSize(width, height, devicePixelRatio=1, mobile=false) {
 }
 
 export class ArchiveEngine {
-  constructor(canvas, assets) {
+  constructor(canvas, assets, { returning=false } = {}) {
     this.canvas=canvas;
     this.A=assets;
     this.renderer=new THREE.WebGLRenderer({
@@ -41,18 +43,22 @@ export class ArchiveEngine {
     this.scene.add(this.cloud.group);
     this.details=new HighResLayer(this.cloud,this.scene);
     this.explore=new Explore(this);
-    // The gallery comes into focus as the tunnel opens.
-    this.explore.dist=30;
+    this.explore.dist=19;
     this.explore.tDist=19;
     this.explore.pitch=.72;
     this.explore.yaw=.6;
+    this.mobile=window.matchMedia("(pointer:coarse)").matches;
+    this.reduced=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+    this.aperture=new ApertureSequence(this.scene,this.camera);
+    this.introDuration=introDuration({returning,reduced:this.reduced});
+    this.introElapsed=this.reduced?this.introDuration:0;
+    this.introComplete=false;
+    this.onIntroComplete=null;
     this.onHover=null;
     this.disposed=false;
     this.frameHandle=0;
     this.lastFrame=0;
     this.running=false;
-    this.mobile=window.matchMedia("(pointer:coarse)").matches;
-    this.reduced=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
     this.resize=()=>{
       if(this.disposed)return;
       const bounds=this.canvas.getBoundingClientRect();
@@ -83,10 +89,24 @@ export class ArchiveEngine {
       if(now-this.lastFrame<budget-.5)return;
       const dt=Math.min(.05,Math.max(.001,(now-(this.lastFrame||now-16))/1000));
       this.lastFrame=now;
-      this.explore.frame(dt);
+      if(!this.introComplete)this.introElapsed=Math.min(this.introDuration,this.introElapsed+dt);
+      const progress=this.introComplete?1:clamp01(this.introElapsed/this.introDuration);
+      this.explore.frame(dt,progress);
+      if(!this.introComplete)this.aperture.update(progress,this.introElapsed);
       this.renderer.render(this.scene,this.camera);
+      if(!this.introComplete&&progress>=1){
+        // The final cinematic frame is the explorer's first frame.
+        this.introComplete=true;
+        this.aperture.finish();
+        this.onIntroComplete?.();
+      }
     };
     this.frameHandle=requestAnimationFrame(loop);
+  }
+  skipIntro(){
+    if(this.introComplete||this.disposed)return;
+    this.introElapsed=this.introDuration;
+    this.aperture.finish();
   }
   stop(){this.running=false;cancelAnimationFrame(this.frameHandle);this.frameHandle=0;}
   dispose(){
@@ -95,6 +115,7 @@ export class ArchiveEngine {
     this.observer.disconnect();
     document.removeEventListener("visibilitychange",this.onVisibility);
     this.details.dispose();
+    this.aperture.dispose();
     this.cloud.meshes.forEach(m=>{m.geometry.dispose();m.material.dispose();});
     this.A.atlases.forEach(t=>t.dispose());
     this.renderer.dispose();
