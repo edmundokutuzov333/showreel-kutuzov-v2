@@ -1,4 +1,5 @@
-import { X, ArrowUpRight, Layers3, Image, Shapes, Clapperboard, Sparkles, Orbit } from "lucide-react";
+import { useState } from "react";
+import { X, ArrowUpRight, Maximize2, Minimize2, Layers3, Image, Shapes, Clapperboard, Sparkles, Orbit } from "lucide-react";
 import { FILTERS } from "@/reel/storyboard";
 import { BASE_URL as BASE } from "@/reel/paths";
 
@@ -7,9 +8,16 @@ const pad = (n) => String(n).padStart(3,"0");
 const icons = [Orbit, Layers3, Image, Shapes, Sparkles, Clapperboard];
 
 function Selected({it, onClose}) {
+  const [expanded,setExpanded] = useState(false);
   return (
     <aside data-testid="explore-selected-panel" onPointerDown={stop} onPointerUp={stop}
-      className="archive-selected">
+      className={"archive-selected"+(expanded?" archive-selected--expanded":"")}>
+      <button type="button" className="archive-expand"
+        aria-label={expanded?"Reduzir visualização":"Ampliar obra"}
+        title={expanded?"Reduzir visualização":"Ampliar obra"}
+        onClick={()=>setExpanded(value=>!value)}>
+        {expanded?<Minimize2 size={19}/>:<Maximize2 size={19}/>}
+      </button>
       <button type="button" data-testid="explore-close-selected" onClick={onClose}
         title="Fechar obra" aria-label="Fechar obra" className="archive-close"><X size={19}/></button>
       <div className="archive-preview">
@@ -52,7 +60,7 @@ export default function ExploreOverlay({r}) {
           <strong>{r.hover.title}</strong>
         </div>
       )}
-      {r.selected&&<Selected it={r.selected} onClose={()=>r.setSelected(null)}/>}
+      {r.selected&&<Selected key={r.selected.id} it={r.selected} onClose={()=>r.setSelected(null)}/>}
     </div>
   );
 }

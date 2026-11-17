@@ -13,7 +13,9 @@ export async function loadArchiveAssets(onProgress=()=>{}) {
     img.onload = () => {
       const texture = new THREE.Texture(img);
       texture.colorSpace = THREE.NoColorSpace;
-      texture.anisotropy = 2;
+      texture.anisotropy = 8;
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
+      texture.magFilter = THREE.LinearFilter;
       texture.needsUpdate = true;
       resolve(texture);
     };

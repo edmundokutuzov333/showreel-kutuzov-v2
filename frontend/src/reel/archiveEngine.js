@@ -2,17 +2,33 @@ import * as THREE from "three";
 import { C } from "./core";
 import { Cloud } from "./cloud";
 import { Explore } from "./explore";
+import { HighResLayer } from "./highResLayer";
 
 /**
  * Standalone, single-pass WebGL archive. No film timeline, score,
  * post-processing targets or high-resolution film assets.
  */
+/**
+ * Cap physical pixels without reducing a 4K desktop to a 1600px canvas.
+ * Values are physical backbuffer pixels, not CSS layout dimensions.
+ */
+export function getRenderSize(width, height, devicePixelRatio=1, mobile=false) {
+  const dpr = Math.min(Math.max(1, devicePixelRatio || 1), 2);
+  const maxWidth = mobile ? 2400 : 4096;
+  const maxHeight = mobile ? 2600 : 2304;
+  const ratio = Math.min(dpr, maxWidth / width, maxHeight / height);
+  return {
+    width: Math.max(2, Math.round(width * ratio)),
+    height: Math.max(2, Math.round(height * ratio))
+  };
+}
+
 export class ArchiveEngine {
   constructor(canvas, assets) {
     this.canvas=canvas;
     this.A=assets;
     this.renderer=new THREE.WebGLRenderer({
-      canvas, alpha:false, antialias:false, powerPreference:"high-performance",
+      canvas, alpha:false, antialias:true, powerPreference:"high-performance",
       preserveDrawingBuffer:false
     });
     this.renderer.outputColorSpace=THREE.LinearSRGBColorSpace;
@@ -23,6 +39,7 @@ export class ArchiveEngine {
     this.camera=new THREE.PerspectiveCamera(42,1,.1,300);
     this.cloud=new Cloud(assets.catalog,assets.atlases);
     this.scene.add(this.cloud.group);
+    this.details=new HighResLayer(this.cloud,this.scene);
     this.explore=new Explore(this);
     // The gallery comes into focus as the tunnel opens.
     this.explore.dist=30;
@@ -40,12 +57,9 @@ export class ArchiveEngine {
       if(this.disposed)return;
       const bounds=this.canvas.getBoundingClientRect();
       const width=Math.max(1,bounds.width),height=Math.max(1,bounds.height);
-      // Cap pixel work on 4K and phones without distorting the aspect ratio.
-      const dpr=Math.min(window.devicePixelRatio||1,this.mobile?1.2:1.5);
-      const ratio=Math.min(dpr,1600/width,960/height);
-      const rw=Math.max(2,Math.round(width*ratio));
-      const rh=Math.max(2,Math.round(height*ratio));
-      this.renderer.setSize(rw,rh,false);
+      // The canvas uses an explicit physical size; avoid double-applying DPR.
+      const size=getRenderSize(width,height,window.devicePixelRatio,this.mobile);
+      this.renderer.setSize(size.width,size.height,false);
       this.camera.aspect=width/height;
       this.camera.updateProjectionMatrix();
     };
@@ -80,6 +94,7 @@ export class ArchiveEngine {
     this.stop();this.disposed=true;
     this.observer.disconnect();
     document.removeEventListener("visibilitychange",this.onVisibility);
+    this.details.dispose();
     this.cloud.meshes.forEach(m=>{m.geometry.dispose();m.material.dispose();});
     this.A.atlases.forEach(t=>t.dispose());
     this.renderer.dispose();

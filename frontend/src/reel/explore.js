@@ -84,6 +84,7 @@ export class Explore {
     });
     cloud.commit(e.scene.fog);
     cam.updateMatrixWorld();
+    e.details.frame(cam,this.hover,e.mobile,e.canvas.getBoundingClientRect().height);
     if (this.hoverClock < 1/30) return;
     this.hoverClock = 0;
     this.ray.setFromCamera(this.ndc, cam);
