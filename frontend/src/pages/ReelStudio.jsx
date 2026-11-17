@@ -18,6 +18,7 @@ export default function ReelStudio(){
   const [showHelp,setShowHelp]=useState(true);
   const shellRef=useRef(null);
   const r=useReel(entered);
+  const {ready,selected,setSelected,resetView,pointer}=r;
   const reveal=useCallback(()=>setEntered(true),[]);
   const toggleFullscreen=useCallback(()=>{
     if(document.fullscreenElement){document.exitFullscreen?.().catch?.(()=>{});}
@@ -31,28 +32,28 @@ export default function ReelStudio(){
   },[]);
 
   useEffect(()=>{
-    if(!entered||!r.ready)return;
+    if(!entered||!ready)return;
     const onKey=(event)=>{
       const target=event.target;
       if(target&&/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))return;
-      if(event.key==="Escape"&&r.selected){r.setSelected(null);return;}
+      if(event.key==="Escape"&&selected){setSelected(null);return;}
       if(event.key.toLowerCase()==="f"){toggleFullscreen();return;}
-      if(event.key.toLowerCase()==="r"){r.resetView();return;}
+      if(event.key.toLowerCase()==="r"){resetView();return;}
       if(event.key==="?"||event.key.toLowerCase()==="h"){setShowHelp(v=>!v);return;}
-      if(event.key==="+"||event.key==="="){r.pointer("wheel",0,0,-155);return;}
-      if(event.key==="-"){r.pointer("wheel",0,0,155);return;}
+      if(event.key==="+"||event.key==="="){pointer("wheel",0,0,-155);return;}
+      if(event.key==="-"){pointer("wheel",0,0,155);return;}
       const arrows={
         ArrowLeft:[-.26,0],ArrowRight:[.26,0],
         ArrowUp:[0,-.19],ArrowDown:[0,.19]
       };
       if(arrows[event.key]){
         event.preventDefault();
-        r.pointer("key",...arrows[event.key]);
+        pointer("key",...arrows[event.key]);
       }
     };
     window.addEventListener("keydown",onKey);
     return ()=>window.removeEventListener("keydown",onKey);
-  },[entered,r.ready,r.pointer,r.resetView,r.selected,r.setSelected,toggleFullscreen]);
+  },[entered,r.ready,pointer,resetView,selected,setSelected,toggleFullscreen]);
 
   return <main ref={shellRef} className="cinema-shell" data-testid="immersive-archive">
     <Stage r={r}/>
