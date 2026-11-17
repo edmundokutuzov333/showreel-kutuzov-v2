@@ -1,7 +1,7 @@
 name: Archive quality gate
 on:
   push:
-    branches: [main, "feat/aperture-awakens"]
+    branches: [main, "feat/aperture-awakens", "feat/archive-nine-interactions"]
   pull_request:
     branches: [main]
   workflow_dispatch:
