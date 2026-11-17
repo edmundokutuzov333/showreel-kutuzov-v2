@@ -13,13 +13,11 @@ function Tool({label,onClick,children,active=false}){
 }
 
 export default function ReelStudio(){
-  const [entered,setEntered]=useState(false);
   const [fullscreen,setFullscreen]=useState(false);
   const [showHelp,setShowHelp]=useState(true);
   const shellRef=useRef(null);
-  const r=useReel(entered);
-  const {ready,selected,setSelected,resetView,pointer}=r;
-  const reveal=useCallback(()=>setEntered(true),[]);
+  const r=useReel();
+  const {ready,introComplete,selected,setSelected,resetView,pointer,skipIntro}=r;
   const toggleFullscreen=useCallback(()=>{
     if(document.fullscreenElement){document.exitFullscreen?.().catch?.(()=>{});}
     else shellRef.current?.requestFullscreen?.().catch?.(()=>{});
@@ -32,10 +30,14 @@ export default function ReelStudio(){
   },[]);
 
   useEffect(()=>{
-    if(!entered||!ready)return;
+    if(!ready)return;
     const onKey=(event)=>{
       const target=event.target;
-      if(target&&/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))return;
+      if(target&&/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName))return;
+      if(!introComplete){
+        if(event.key==="Escape"||event.key==="Enter"){event.preventDefault();skipIntro();}
+        return;
+      }
       if(event.key==="Escape"&&selected){setSelected(null);return;}
       if(event.key.toLowerCase()==="f"){toggleFullscreen();return;}
       if(event.key.toLowerCase()==="r"){resetView();return;}
@@ -53,12 +55,13 @@ export default function ReelStudio(){
     };
     window.addEventListener("keydown",onKey);
     return ()=>window.removeEventListener("keydown",onKey);
-  },[entered,ready,pointer,resetView,selected,setSelected,toggleFullscreen]);
+  },[ready,introComplete,pointer,resetView,selected,setSelected,skipIntro,toggleFullscreen]);
 
   return <main ref={shellRef} className="cinema-shell" data-testid="immersive-archive">
     <Stage r={r}/>
-    {!entered&&<PortalIntro onComplete={reveal}/>}
-    {entered&&r.ready&&(
+    {!r.introComplete&&<PortalIntro ready={r.ready} returning={r.returning}
+      progress={r.progress} onSkip={r.skipIntro}/>}
+    {r.introComplete&&r.ready&&(
       <>
         <nav aria-label="Navegação do arquivo" className="cinema-toolbar">
           <Tool label="Aproximar" onClick={()=>r.pointer("wheel",0,0,-170)}>
@@ -84,7 +87,7 @@ export default function ReelStudio(){
         </div>}
       </>
     )}
-    {entered&&r.error&&<div role="alert" className="cinema-error">
+    {r.error&&<div role="alert" className="cinema-error">
       <p>{r.error}</p>
       <button onClick={()=>window.location.reload()}>Tentar novamente</button>
     </div>}
