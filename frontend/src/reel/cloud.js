@@ -47,13 +47,16 @@ export class Cloud {
       });
       const mesh = new THREE.InstancedMesh(geo, mat, count);
       mesh.frustumCulled = false;
+      // Stable broadphase volume: no costly per-frame sphere recalculation.
+      mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(),150);
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       this.group.add(mesh);
       return mesh;
     });
+    const slotCounters=new Int32Array(atlases.length);
     this.slot = this.items.map((it) => {
       const a = it.atlas;
-      const j = this.items.filter((x, i) => x.atlas === a && i < this.items.indexOf(it)).length;
+      const j = slotCounters[a]++;
       const cells = this.meshes[a].geometry.attributes.aCell;
       cells.setXY(j, it.cell % catalog.cols, Math.floor(it.cell / catalog.cols));
       return { a, j };

@@ -1,13 +1,16 @@
-# V3 Immersive Archive — Frontend
+# Immersive Archive — React UI
 
-Production entry: `src/App.js`, rendering `src/pages/ReelStudio.jsx` in full viewport.
+Root: `src/App.js` -> `src/pages/ReelStudio.jsx`. Main mode: **archive only**.
 
-```sh
+The 2-second portal consists of `src/components/ui/portal-intro.tsx`, `dither-flow.tsx` and an optional lazy `bloim-animation-background.tsx`. TypeScript, Tailwind, and shadcn path aliases are configured; add UI elements under `src/components/ui` to keep aliases consistent.
+
+Archive runtime: `src/reel/archiveEngine.js`, `archiveAssets.js`, `explore.js`, `cloud.js`, `formations.js`.
+
+```bash
 yarn install
 yarn start
 yarn build
+yarn test:ci
 ```
 
-The UI is exclusive to the V3 film and interactive archive. The 3D engine is in `src/reel/engine.js`, exploration in `src/reel/explore.js`, and media in `public/reel`.
-
-Production: https://showreel-kutuzov-v2.vercel.app
+Deployment URL: https://showreel-kutuzov-v2.vercel.app

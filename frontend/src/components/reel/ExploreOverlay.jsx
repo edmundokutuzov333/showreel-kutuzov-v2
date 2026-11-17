@@ -1,6 +1,6 @@
 import { X, ArrowUpRight, Layers3, Image, Shapes, Clapperboard, Sparkles, Orbit } from "lucide-react";
 import { FILTERS } from "@/reel/storyboard";
-import { BASE } from "@/reel/assets";
+import { BASE_URL as BASE } from "@/reel/paths";
 
 const stop = (e) => e.stopPropagation();
 const pad = (n) => String(n).padStart(3,"0");

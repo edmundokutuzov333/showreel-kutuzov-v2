@@ -83,7 +83,6 @@ export class Explore {
       cloud.set(i, this.o.p, this.o.q, this.o.s * this.scales[i], this.dims[i]);
     });
     cloud.commit(e.scene.fog);
-    cloud.meshes.forEach((m) => { m.boundingSphere = null; });
     cam.updateMatrixWorld();
     if (this.hoverClock < 1/30) return;
     this.hoverClock = 0;
@@ -93,7 +92,7 @@ export class Explore {
     for (const hit of hits) {
       const idx = cloud.indexFromHit(hit.object, hit.instanceId);
       const it = this.items[idx];
-      if (this.filter === "ALL" || it.cat === this.filter) { h = idx; break; }
+      if (it && (this.filter === "ALL" || it.cat === this.filter)) { h = idx; break; }
     }
     if (h !== this.hover) {
       this.hover = h;
