@@ -53,7 +53,7 @@ export default function ReelStudio(){
     };
     window.addEventListener("keydown",onKey);
     return ()=>window.removeEventListener("keydown",onKey);
-  },[entered,r.ready,pointer,resetView,selected,setSelected,toggleFullscreen]);
+  },[entered,ready,pointer,resetView,selected,setSelected,toggleFullscreen]);
 
   return <main ref={shellRef} className="cinema-shell" data-testid="immersive-archive">
     <Stage r={r}/>
