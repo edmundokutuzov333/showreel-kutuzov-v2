@@ -53,6 +53,22 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--ember);outline-offs
 .archive-selected--expanded .archive-preview{min-height:0}
 .archive-preview{flex:1;min-height:0;border-radius:12px;background:rgba(0,0,0,.4);display:grid;place-items:center;overflow:hidden}
 .archive-media{width:100%;height:100%;object-fit:contain}
+/* Curated discovery rail; actual catalogue atlas cells, no extra images. */
+.archive-related{flex:none;display:flex;flex-direction:column;gap:7px;border-top:1px solid rgba(171,209,255,.11);padding:7px 2px 0}
+.archive-related__head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:27px}
+.archive-related__head>span{font:600 9px/1 "JetBrains Mono",monospace;letter-spacing:.18em;color:rgba(190,214,244,.68)}
+.archive-related__arrow{width:30px;height:27px;display:grid;place-items:center;appearance:none;background:transparent;color:#dce8ff;border:1px solid rgba(159,196,241,.17);border-radius:8px;cursor:pointer;transition:background .2s,border-color .2s}
+.archive-related__arrow:hover{background:rgba(73,114,228,.3);border-color:rgba(157,201,255,.6)}
+.archive-related__tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.archive-related__tile{appearance:none;position:relative;height:56px;min-width:0;overflow:hidden;border:1px solid rgba(167,196,241,.18);border-radius:7px;background:#11192b;padding:0;cursor:pointer;transition:border-color .22s,transform .22s,box-shadow .22s}
+.archive-related__tile>span{display:block;position:absolute;inset:0;background-repeat:no-repeat;background-color:#101829;filter:saturate(.94)}
+.archive-related__tile:hover,.archive-related__tile:focus-visible{border-color:rgba(156,199,251,.9);transform:translateY(-2px);box-shadow:0 4px 18px rgba(33,86,216,.2)}
+.archive-preview--discipline .archive-media{animation:archiveDiscipline .52s cubic-bezier(.19,1,.28,1) both}
+.archive-preview--project .archive-media{animation:archiveProject .59s cubic-bezier(.19,1,.28,1) both}
+.archive-preview--cross .archive-media{animation:archiveCross .32s ease-out both}
+@keyframes archiveDiscipline{from{opacity:.15;transform:translateX(15px) scale(1.04);filter:blur(5px)}to{opacity:1;transform:translateX(0) scale(1);filter:blur(0)}}
+@keyframes archiveProject{from{opacity:.3;transform:scale(1.075)}to{opacity:1;transform:scale(1)}}
+@keyframes archiveCross{from{opacity:.1;transform:scale(.99)}to{opacity:1;transform:scale(1)}}
 .archive-metadata{padding:2px 6px 7px}
 .archive-metadata p{font:500 10px "JetBrains Mono",monospace;letter-spacing:.14em;color:#9cc6f5;text-transform:uppercase;margin:0}
 .archive-metadata h2{font:700 clamp(17px,2.4vw,24px)/1.2 "Syne",sans-serif;margin:12px 0 18px}
@@ -71,9 +87,6 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--ember);outline-offs
 .portal-hud{position:absolute;inset:0;z-index:44;pointer-events:none;color:#dbe9fb}
 .portal-hud__brand{position:absolute;top:max(23px,env(safe-area-inset-top));left:max(24px,env(safe-area-inset-left));font:600 11px "JetBrains Mono",monospace;letter-spacing:.14em;opacity:.73}
 .portal-hud__brand span{opacity:.36;padding:0 4px}
-.portal-hud__skip{pointer-events:auto;position:absolute;top:max(15px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right));padding:13px 17px;border:1px solid rgba(149,181,237,.29);border-radius:100px;color:#e2eeff;background:rgba(5,12,27,.52);backdrop-filter:blur(14px);cursor:pointer;font:600 10px/1.2 "JetBrains Mono",monospace;letter-spacing:.12em;transition:background .22s,border-color .22s,transform .22s}
-.portal-hud__skip span{margin-left:9px;color:#a3ccff}
-.portal-hud__skip:hover{background:rgba(47,83,172,.45);border-color:#91b8ff;transform:translateY(-2px)}
 @keyframes bootIris{0%,100%{transform:scale(.89);opacity:.35}50%{transform:scale(1.08);opacity:.85}}
 @keyframes bootProgress{0%,100%{transform:scaleX(.25);opacity:.25}50%{transform:scaleX(1);opacity:.8}}
 @media(max-width:650px){
@@ -85,12 +98,15 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--ember);outline-offs
  .cinema-gesture-guide>span{font-size:8px;padding:7px 9px;gap:6px}
  .archive-selected{top:112px;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));width:auto}
  .archive-hover{top:22%}
+ .archive-related__tile{height:48px}
+ .archive-related{gap:5px;padding-top:5px}
+ .archive-related__tiles{gap:5px}
  .portal-hud__brand{top:17px;left:14px;font-size:9px;letter-spacing:.08em}
- .portal-hud__skip{top:12px;right:12px;padding:11px 12px;font-size:9px}
  .portal-boot__core{width:65vmin}
 }
 @media(prefers-reduced-motion:reduce){
  .portal-boot__core i,.portal-boot__progress{animation:none}
  .cinema-gesture-guide{animation:none}
+ .archive-preview .archive-media{animation:none!important}
  *,*::before,*::after{transition-duration:.01ms!important}
 }
