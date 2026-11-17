@@ -17,7 +17,7 @@ export default function ReelStudio(){
   const [showHelp,setShowHelp]=useState(true);
   const shellRef=useRef(null);
   const r=useReel();
-  const {ready,introComplete,selected,setSelected,resetView,pointer,skipIntro}=r;
+  const {ready,introComplete,selected,setSelected,resetView,pointer}=r;
   const toggleFullscreen=useCallback(()=>{
     if(document.fullscreenElement){document.exitFullscreen?.().catch?.(()=>{});}
     else shellRef.current?.requestFullscreen?.().catch?.(()=>{});
@@ -34,10 +34,7 @@ export default function ReelStudio(){
     const onKey=(event)=>{
       const target=event.target;
       if(target&&/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(target.tagName))return;
-      if(!introComplete){
-        if(event.key==="Escape"||event.key==="Enter"){event.preventDefault();skipIntro();}
-        return;
-      }
+      if(!introComplete)return;
       if(event.key==="Escape"&&selected){setSelected(null);return;}
       if(event.key.toLowerCase()==="f"){toggleFullscreen();return;}
       if(event.key.toLowerCase()==="r"){resetView();return;}
@@ -55,12 +52,11 @@ export default function ReelStudio(){
     };
     window.addEventListener("keydown",onKey);
     return ()=>window.removeEventListener("keydown",onKey);
-  },[ready,introComplete,pointer,resetView,selected,setSelected,skipIntro,toggleFullscreen]);
+  },[ready,introComplete,pointer,resetView,selected,setSelected,toggleFullscreen]);
 
   return <main ref={shellRef} className="cinema-shell" data-testid="immersive-archive">
     <Stage r={r}/>
-    {!r.introComplete&&<PortalIntro ready={r.ready} returning={r.returning}
-      progress={r.progress} onSkip={r.skipIntro}/>}
+    {!r.introComplete&&<PortalIntro ready={r.ready} progress={r.progress}/>}
     {r.introComplete&&r.ready&&(
       <>
         <nav aria-label="Navegação do arquivo" className="cinema-toolbar">
