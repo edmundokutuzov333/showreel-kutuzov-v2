@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { makePoses, pose, galaxyPose } from "./formations";
+import { introPose, artworkReveal } from "./apertureTimeline";
 
 const ORIGIN = new THREE.Vector3();
 
@@ -54,19 +55,25 @@ export class Explore {
     this.idle = 0;
   }
 
-  frame(dt) {
-    const e = this.e;
-    this.time += dt;
-    this.idle += dt;
+  frame(dt, introProgress=1) {
+    const e=this.e,entering=introProgress<1;
+    this.time+=dt*(entering?.42:1);
+    if(!entering)this.idle+=dt;
     this.hoverClock+=dt;
-    if (this.idle > 2.5 && !this.drag) this.tYaw += dt * 0.06;
-    const k = 1 - Math.exp(-dt * 10);
-    this.yaw += (this.tYaw - this.yaw) * k;
-    this.pitch += (this.tPitch - this.pitch) * k;
-    this.dist += (this.tDist - this.dist) * k;
-    const cam = e.camera;
-    const cp = Math.cos(this.pitch);
-    cam.position.set(Math.sin(this.yaw) * cp * this.dist, Math.sin(this.pitch) * this.dist, Math.cos(this.yaw) * cp * this.dist);
+    if(!entering&&this.idle>2.5&&!this.drag)this.tYaw+=dt*.06;
+    const k=1-Math.exp(-dt*10);
+    if(!entering){
+      this.yaw+=(this.tYaw-this.yaw)*k;
+      this.pitch+=(this.tPitch-this.pitch)*k;
+      this.dist+=(this.tDist-this.dist)*k;
+    }
+    const cam=e.camera;
+    const intro=introPose(introProgress,e.aperture.pointerX,e.aperture.pointerY);
+    const yaw=entering?intro.yaw:this.yaw;
+    const pitch=entering?intro.pitch:this.pitch;
+    const distance=entering?intro.distance:this.dist;
+    const cp=Math.cos(pitch);
+    cam.position.set(Math.sin(yaw)*cp*distance,Math.sin(pitch)*distance,Math.cos(yaw)*cp*distance);
     cam.lookAt(0, 0, 0);
     if (cam.fov !== 42) { cam.fov = 42; cam.updateProjectionMatrix(); }
     e.scene.fog.near = 8;
@@ -79,13 +86,22 @@ export class Explore {
       const td = i === this.hover ? 1.08 : match ? 0.92 : 0.16;
       this.scales[i] += (ts - this.scales[i]) * (1 - Math.exp(-dt * 10));
       this.dims[i] += (td - this.dims[i]) * (1 - Math.exp(-dt * 8));
-      if (i === this.hover) this.o.p.addScaledVector(cam.getWorldDirection(this.lookDirection), -0.6);
-      cloud.set(i, this.o.p, this.o.q, this.o.s * this.scales[i], this.dims[i]);
+      if(entering){
+        // The real atlas artwork emerges directly from a luminous spatial seed.
+        const appear=artworkReveal(introProgress,this.P[i].rnd2);
+        this.o.p.multiplyScalar(appear)
+          .addScaledVector(this.P[i].dir,(1-appear)*(.18+this.P[i].rnd));
+        this.o.s*=Math.max(.001,appear);
+        this.o.d*=appear;
+      }else if(i===this.hover){
+        this.o.p.addScaledVector(cam.getWorldDirection(this.lookDirection),-.6);
+      }
+      cloud.set(i,this.o.p,this.o.q,this.o.s*this.scales[i],this.o.d*(this.dims[i]/.92));
     });
     cloud.commit(e.scene.fog);
     cam.updateMatrixWorld();
-    e.details.frame(cam,this.hover,e.mobile,e.canvas.getBoundingClientRect().height);
-    if (this.hoverClock < 1/30) return;
+    if(introProgress>.86)e.details.frame(cam,entering?-1:this.hover,e.mobile,e.canvas.getBoundingClientRect().height);
+    if(entering||this.hoverClock<1/30)return;
     this.hoverClock = 0;
     this.ray.setFromCamera(this.ndc, cam);
     const hits = this.ray.intersectObjects(cloud.meshes, false);
