@@ -32,7 +32,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--ember);outline-offs
 .cinema-loading{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at center,#132247,#050912 70%);pointer-events:none;z-index:12}
 .cinema-loader-ring{width:58px;height:58px;border:1px solid rgba(156,198,245,.17);border-top:2px solid #9cc6f5;border-radius:50%;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.cinema-error{position:absolute;z-index:32;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(16,25,46,.95);border:1px solid rgba(156,198,245,.3);color:#e8eef6;border-radius:14px;padding:24px;max-width:90%;min-width:230px;font-size:13px}
+.cinema-error{position:absolute;z-index:70;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(16,25,46,.95);border:1px solid rgba(156,198,245,.3);color:#e8eef6;border-radius:14px;padding:24px;max-width:90%;min-width:230px;font-size:13px}
 .cinema-error p{margin:0 0 16px}
 .cinema-error button{cursor:pointer;background:#9cc6f5;color:#08111d;padding:9px 16px;border-radius:8px;border:0}
 .archive-overlay{position:absolute;inset:0;pointer-events:none;z-index:13}
@@ -58,23 +58,24 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--ember);outline-offs
 .archive-metadata h2{font:700 clamp(17px,2.4vw,24px)/1.2 "Syne",sans-serif;margin:12px 0 18px}
 .archive-metadata a{display:flex;align-items:center;justify-content:space-between;color:#09111e;text-decoration:none;border-radius:10px;background:#e8eef6;padding:13px 16px;font:700 11px "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase}
 .archive-metadata a:hover{background:#9cc6f5}
-/* The two-second cinematic gateway */
-.portal-intro{position:absolute;inset:0;z-index:40;overflow:hidden;pointer-events:auto;isolation:isolate;background:#060a13;animation:portalExit 2s linear both;will-change:opacity}
-.portal-dither{position:absolute;inset:0;width:100%;height:100%}
-.portal-unicorn-host{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.19;mix-blend-mode:screen;filter:hue-rotate(4deg) saturate(.72);z-index:2}
-.portal-unicorn-host>*{width:100%;height:100%}
-.portal-core{position:absolute;z-index:3;left:50%;top:50%;width:30vmin;height:30vmin;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;background:radial-gradient(circle,#010711 0%,#03091d 34%,rgba(6,12,35,.7) 50%,transparent 72%);box-shadow:0 0 9vmin 5vmin rgba(37,76,200,.25),inset 0 0 3vmin rgba(156,198,245,.30);animation:coreDive 2s cubic-bezier(.19,.9,.13,1) both}
-.portal-iris{position:absolute;left:50%;top:50%;z-index:4;width:68vmin;height:68vmin;border-radius:50%;border:1px solid rgba(150,200,245,.6);box-shadow:0 0 20px rgba(90,143,255,.5),inset 0 0 24px rgba(68,102,255,.36);transform:translate(-50%,-50%) scale(.45);opacity:0;pointer-events:none}
-.portal-iris--one{animation:irisDive 1.36s cubic-bezier(.19,.74,.1,1) 0s both}
-.portal-iris--two{animation:irisDive 1.36s cubic-bezier(.19,.74,.1,1) .29s both}
-.portal-iris--three{animation:irisDive 1.36s cubic-bezier(.19,.74,.1,1) .58s both}
-.portal-lens{position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(ellipse at center,transparent 15%,rgba(3,8,20,.22) 57%,rgba(0,0,0,.66) 100%),linear-gradient(112deg,transparent 25%,rgba(147,197,251,.055) 49%,transparent 57%);animation:lensRotate 2s cubic-bezier(.2,.8,.2,1) both}
-.portal-flash{position:absolute;inset:-20%;z-index:6;pointer-events:none;background:radial-gradient(circle at center,#e9f7ff 0%,#76a9ff 12%,rgba(49,85,190,.38) 30%,transparent 65%);opacity:0;mix-blend-mode:screen;animation:portalFlash 2s ease both}
-@keyframes irisDive{0%{opacity:0;transform:translate(-50%,-50%) scale(.36) rotate(-17deg)}13%{opacity:.85}68%{opacity:.65}100%{opacity:0;transform:translate(-50%,-50%) scale(4.1) rotate(33deg)}}
-@keyframes coreDive{0%{transform:translate(-50%,-50%) scale(.35);opacity:.9}64%{transform:translate(-50%,-50%) scale(1.3);opacity:.93}100%{transform:translate(-50%,-50%) scale(8);opacity:0}}
-@keyframes lensRotate{0%{transform:scale(1) rotate(-8deg)}100%{transform:scale(1.4) rotate(9deg)}}
-@keyframes portalFlash{0%,76%{opacity:0}88%{opacity:.34}93%{opacity:.75}100%{opacity:0}}
-@keyframes portalExit{0%,89%{opacity:1}100%{opacity:0}}
+/* The real cinematic aperture lives in the existing Three.js canvas.
+   Only a lightweight CSS curtain is shown while the archive assets load. */
+.portal-boot{position:absolute;inset:0;z-index:40;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse 48% 60% at 50% 49%,#111d3b 0%,#070e20 48%,#030710 100%);display:grid;place-items:center;opacity:1;transition:opacity .55s cubic-bezier(.2,.72,.18,1);will-change:opacity}
+.portal-boot--release{opacity:0}
+.portal-boot__core{position:relative;display:grid;place-items:center;width:min(48vw,40vh);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(11,25,57,.2) 0%,rgba(43,78,159,.1) 47%,transparent 66%);box-shadow:0 0 110px rgba(37,80,173,.12)}
+.portal-boot__core i{position:absolute;inset:12%;border:1px solid rgba(113,163,244,.34);border-radius:50%;box-shadow:0 0 22px rgba(76,119,228,.28),inset 0 0 24px rgba(76,119,228,.08);animation:bootIris 2.2s ease-in-out infinite}
+.portal-boot__core i:nth-child(2){inset:27%;animation-delay:-.7s;opacity:.65}
+.portal-boot__core i:nth-child(3){inset:40%;animation-delay:-1.2s;opacity:.85}
+.portal-boot__status{position:absolute;bottom:max(8%,35px);left:50%;transform:translateX(-50%);display:grid;gap:10px;justify-items:center;color:rgba(184,207,245,.78);font:500 10px/1.3 "JetBrains Mono",monospace;letter-spacing:.19em;white-space:nowrap}
+.portal-boot__progress{display:block;width:70px;height:1px;background:linear-gradient(90deg,transparent,#91b8ff,transparent);opacity:.7;animation:bootProgress 1.7s ease-in-out infinite}
+.portal-hud{position:absolute;inset:0;z-index:44;pointer-events:none;color:#dbe9fb}
+.portal-hud__brand{position:absolute;top:max(23px,env(safe-area-inset-top));left:max(24px,env(safe-area-inset-left));font:600 11px "JetBrains Mono",monospace;letter-spacing:.14em;opacity:.73}
+.portal-hud__brand span{opacity:.36;padding:0 4px}
+.portal-hud__skip{pointer-events:auto;position:absolute;top:max(15px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right));padding:13px 17px;border:1px solid rgba(149,181,237,.29);border-radius:100px;color:#e2eeff;background:rgba(5,12,27,.52);backdrop-filter:blur(14px);cursor:pointer;font:600 10px/1.2 "JetBrains Mono",monospace;letter-spacing:.12em;transition:background .22s,border-color .22s,transform .22s}
+.portal-hud__skip span{margin-left:9px;color:#a3ccff}
+.portal-hud__skip:hover{background:rgba(47,83,172,.45);border-color:#91b8ff;transform:translateY(-2px)}
+@keyframes bootIris{0%,100%{transform:scale(.89);opacity:.35}50%{transform:scale(1.08);opacity:.85}}
+@keyframes bootProgress{0%,100%{transform:scaleX(.25);opacity:.25}50%{transform:scaleX(1);opacity:.8}}
 @media(max-width:650px){
  .cinema-toolbar{top:12px;right:12px;gap:5px}.cinema-tool{width:38px;height:38px}
  .archive-filters{top:62px;left:12px;max-width:calc(100% - 24px);gap:5px}
@@ -84,12 +85,12 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--ember);outline-offs
  .cinema-gesture-guide>span{font-size:8px;padding:7px 9px;gap:6px}
  .archive-selected{top:112px;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));width:auto}
  .archive-hover{top:22%}
- .portal-core{width:54vmin;height:54vmin}
- .portal-iris{width:105vmin;height:105vmin}
+ .portal-hud__brand{top:17px;left:14px;font-size:9px;letter-spacing:.08em}
+ .portal-hud__skip{top:12px;right:12px;padding:11px 12px;font-size:9px}
+ .portal-boot__core{width:65vmin}
 }
 @media(prefers-reduced-motion:reduce){
- .portal-iris,.portal-core,.portal-lens,.portal-flash{animation:none;opacity:.35}
- .portal-intro{animation:portalExit 2s linear both}
+ .portal-boot__core i,.portal-boot__progress{animation:none}
  .cinema-gesture-guide{animation:none}
  *,*::before,*::after{transition-duration:.01ms!important}
 }
