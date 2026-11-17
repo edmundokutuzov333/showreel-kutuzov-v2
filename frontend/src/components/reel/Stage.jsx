@@ -15,26 +15,26 @@ const Stage=forwardRef(function Stage({r},ref){
     aria-label="Exploração interactiva do arquivo de arte"
     onPointerMove={e=>r.pointer("move",...pos(e))}
     onPointerDown={e=>{
-      if(!r.ready||!e.isPrimary||(e.button!==undefined&&e.button!==0))return;
+      if(!r.introComplete||!e.isPrimary||(e.button!==undefined&&e.button!==0))return;
       if(e.target.tagName!=="CANVAS"&&e.target!==e.currentTarget)return;
       e.currentTarget.setPointerCapture?.(e.pointerId);
       r.pointer("down",...pos(e));
     }}
     onPointerUp={e=>{
-      if(!r.ready||!e.isPrimary)return;
+      if(!r.introComplete||!e.isPrimary)return;
       r.pointer("up",...pos(e));
       if(e.currentTarget.hasPointerCapture?.(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
     }}
     onPointerCancel={()=>r.pointer("leave",0,0)}
     onPointerLeave={()=>r.pointer("leave",0,0)}
-    onWheel={e=>{if(r.ready){e.preventDefault();r.pointer("wheel",0,0,e.deltaY);}}}
+    onWheel={e=>{if(r.introComplete){e.preventDefault();r.pointer("wheel",0,0,e.deltaY);}}}
     onTouchStart={e=>{
       if(e.touches.length===2)pinch.current=Math.hypot(
         e.touches[0].clientX-e.touches[1].clientX,
         e.touches[0].clientY-e.touches[1].clientY);
     }}
     onTouchMove={e=>{
-      if(e.touches.length!==2||!pinch.current||!r.ready)return;
+      if(e.touches.length!==2||!pinch.current||!r.introComplete)return;
       const distance=Math.hypot(
         e.touches[0].clientX-e.touches[1].clientX,
         e.touches[0].clientY-e.touches[1].clientY);
@@ -44,13 +44,7 @@ const Stage=forwardRef(function Stage({r},ref){
     onTouchEnd={()=>{pinch.current=null;}}
   >
     <canvas ref={r.canvasRef} data-testid="reel-canvas" className="cinema-canvas"/>
-    {!r.ready&&!r.error&&(
-      <div data-testid="reel-loading" className="cinema-loading" role="status"
-        aria-label="A preparar a exploração 3D">
-        <div className="cinema-loader-ring" aria-hidden="true"/>
-      </div>
-    )}
-    {r.ready&&<ExploreOverlay r={r}/>}
+    {r.introComplete&&<ExploreOverlay r={r}/>}
   </section>;
 });
 export default Stage;
