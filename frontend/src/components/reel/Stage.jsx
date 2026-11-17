@@ -18,8 +18,17 @@ const Stage = forwardRef(function Stage({ r }, forwardedRef) {
   return (
     <div ref={forwardedRef} data-testid="reel-stage" className={"cinema-stage "+(r.mode==="explore"?"cinema-stage--explore":"")}
       onPointerMove={(e)=>r.pointer("move",...relative(e))}
-      onPointerDown={(e)=>{ if(e.button!==undefined && e.button!==0) return; e.currentTarget.setPointerCapture?.(e.pointerId); r.pointer("down",...relative(e)); }}
-      onPointerUp={(e)=>{r.pointer("up",...relative(e)); if(e.currentTarget.hasPointerCapture?.(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}
+      onPointerDown={(e)=>{
+        if(r.mode!=="explore"||!e.isPrimary||(e.button!==undefined&&e.button!==0))return;
+        if(e.target!==e.currentTarget&&e.target.tagName!=="CANVAS")return;
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        r.pointer("down",...relative(e));
+      }}
+      onPointerUp={(e)=>{
+        if(r.mode!=="explore"||!e.isPrimary)return;
+        r.pointer("up",...relative(e));
+        if(e.currentTarget.hasPointerCapture?.(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
+      }}
       onPointerCancel={()=>r.pointer("leave",0,0)}
       onPointerLeave={()=>r.pointer("leave",0,0)}
       onWheel={(e)=>{if(r.mode==="explore"){ e.preventDefault();r.pointer("wheel",0,0,e.deltaY);}}}
