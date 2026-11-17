@@ -1,50 +1,51 @@
-# Kutuzov | Immersive Archive
+# Kutuzov | Immersive Archive V2
 
-Standalone, archive-only exhibition built from the V3 3D gallery.
-The 60-second showreel player and the earlier version selectors are removed.
+A standalone, interactive exhibition of **155 artworks**. The showreel timeline and version selector are not part of this app. Video artworks remain available inside the archive.
 
 ## Live
-https://showreel-kutuzov-v2.vercel.app
+https://showreel-kutuzov-v2-kutuzov.vercel.app
 
-## Experience
-1. A 2,000 ms cinematic portal animation with ordered Bayer dithering, a blue-black tunnel, coordinated rings, perspective zoom, glow and iris transition
-2. Automatically arrive at the original interactive galaxy of **155 portfolio works**
-3. Drag/touch to orbit; pinch/wheel/zoom buttons to approach; click/tap art to inspect it; filters to isolate disciplines
-4. Navigate with the arrow keys, `+`/`-` to zoom, `R` to reset and `F` to enter fullscreen
+## The Aperture × Archive Awakens
+The opening and exploration now share the **same Three.js scene, camera, canvas and rendering loop**. There is no cut between two independent WebGL engines.
 
-The project intentionally retains real video work within the portfolio archive's VIDEO category; it removes only the showreel player and film timeline.
+1. A lightweight deep-blue loading curtain remains until the catalogue and both atlas textures have loaded. Network delays never expose an empty gallery.
+2. The native 3D aperture appears as concentric luminous iris rings and a restrained shader halo. The pointer adds slight perspective movement.
+3. A field of blue-white particles expands while **the actual atlas artworks** grow from their spatial seeds into the 3D gallery configuration.
+4. The camera interpolates to the archive's exact home position; the last intro frame and the first interactive frame have identical positions and visibility.
+5. Only after that rendered frame do the filters, drag/zoom controls and selected-work overlays become interactive.
 
-## Architecture
-- React 19 + Create React App/CRACO
-- TypeScript for new animated UI components, existing application modules remain in JavaScript during migration
-- Tailwind CSS 3 and the existing **shadcn-style** folder at `frontend/src/components/ui/` (aliases resolve `@/components/ui`)
-- `src/components/ui/dither-flow.tsx` implements a GPU-efficient 2-second entrance shader, adapted from the supplied dither reference
-- `src/components/ui/bloim-animation-background.tsx` embeds the supplied `unicornstudio-react` scene (project ID `9tVO0xGS8DIar1DF4Sqc`), lazy-loaded only on higher-performance desktops; the native shader remains a complete fallback
-- `src/components/ui/portal-intro.tsx` runs the precise 2-second transition
-- `src/reel/archiveAssets.js` fetches only `catalog.json` and two `atlas*.webp` files; artwork originals load only when selected
-- `src/reel/archiveEngine.js` owns one-pass Three.js rendering and input motion. No timeline, audio engine, export renderer or video preloading on entry
+Default opening duration: **3.25 seconds after assets are ready**. Returning visitors get **1.35 seconds**, using an optional localStorage flag. Users may skip with the visible button or Escape/Enter. Reduced-motion preference presents the static archive without flying camera movement.
 
-## Installation and testing
+The previous Dither Flow and Unicorn Studio components remain in the codebase as legacy references, but they are not mounted in the current intro; this avoids a competing GPU canvas.
+
+## Interactive archive
+- Orbit and pinch/wheel zoom, category filters and fullscreen view.
+- Single draw-pass instanced atlas preview of all 155 artworks.
+- Progressive high-resolution artwork textures for visible and close-up works, with bounded GPU cache and an expanded artwork viewer.
+- Native image and video artwork selection. The full showreel film is intentionally absent.
+
+## Code
+- Frontend: React 19, Create React App/CRACO, Three.js, Tailwind CSS.
+- Intro motion helpers: `frontend/src/reel/apertureTimeline.js` (pure interpolation and durations).
+- 3D iris and particles: `frontend/src/reel/apertureSequence.js`.
+- Shared camera and frame loop: `frontend/src/reel/archiveEngine.js` and `frontend/src/reel/explore.js`.
+- Loading curtain and skip control: `frontend/src/components/ui/portal-intro.tsx`.
+- Asset boot: `frontend/src/reel/archiveAssets.js`.
+- Layout: `frontend/src/pages/ReelStudio.jsx`, `frontend/src/components/reel/Stage.jsx`.
+
+## Verification
 ```bash
 cd frontend
 yarn install
-yarn start
-yarn build
 yarn test:ci
+yarn build
 ```
 
-Tailwind is already configured in `tailwind.config.js` and `src/index.css`. shadcn-compatible settings are in `components.json`. New component files must live under `src/components/ui` rather than a repository-root `/components/ui`, because the alias `@/` points at `src/`.
-You can add official shadcn components with `npx shadcn@latest add <component-name>`. If starting a *different* app from scratch, initialise it with `npx shadcn@latest init` and install Tailwind and TypeScript there; this repository already contains those configurations.
+GitHub Actions runs `.github/workflows/archive-quality.yml` for the feature branch and `main`, including unit tests and a production build. Automated checks verify the exact final camera pose, zero portal intensity on handoff, completed artwork formation, shortened repeat visit and reduced-motion behaviour. Automated builds do **not** replace cross-device visual review.
 
 ## Deployment isolation
-- GitHub: `edmundokutuzov333/showreel-kutuzov-v2`
-- Branch: `main`
-- Vercel team: `KUTUZOV`
-- Project: `showreel-kutuzov-v2`
-- Root Directory: `frontend`
-- The original `showreel-kutuzov` and `kutuzovportfolio333` projects are never deployment targets for this code.
-
-## Performance design
-The intro is time-bounded and unloads before the archive renderer is instantiated. Gallery assets are prefetched concurrently with the 2-second portal. The archive is GPU-instanced, rendered in one pass with device-aware resolution caps, throttled hover hit tests, and no extra full-resolution post pass. The portal uses bounded render resolution and disables the optional Unicorn Studio layer on phones and in reduced-motion mode.
-
-The portal timing is 2 seconds. On a slow network the gallery can require extra time to load its resources; after 2 seconds the portal leaves rather than artificially delaying the interface.
+- Source: `edmundokutuzov333/showreel-kutuzov-v2`
+- Production branch: `main`
+- Vercel project: `showreel-kutuzov-v2`, team `KUTUZOV`
+- Vercel project root: `frontend`
+- The original `showreel-kutuzov` and `kutuzovportfolio333` remain independent.

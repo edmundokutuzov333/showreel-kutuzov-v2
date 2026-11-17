@@ -1,16 +1,23 @@
-# Immersive Archive — React UI
+# Immersive Archive V2 — Frontend
 
-Root: `src/App.js` -> `src/pages/ReelStudio.jsx`. Main mode: **archive only**.
+Entry point: `src/App.js` → `src/pages/ReelStudio.jsx`. This application is an archive-only interactive exhibition, not a 60-second movie.
 
-The 2-second portal consists of `src/components/ui/portal-intro.tsx`, `dither-flow.tsx` and an optional lazy `bloim-animation-background.tsx`. TypeScript, Tailwind, and shadcn path aliases are configured; add UI elements under `src/components/ui` to keep aliases consistent.
+## Cinematic intro
+- `src/reel/apertureTimeline.js` — pure timing, camera path and per-artwork reveal functions.
+- `src/reel/apertureSequence.js` — iris geometry, blue light shader and forming particles.
+- `src/reel/archiveEngine.js` — runs the intro and interactive archive in the **same scene and renderer**.
+- `src/reel/explore.js` — smoothly forms the original gallery positions as the camera flies in.
+- `src/components/ui/portal-intro.tsx` — preloading-only curtain, skip control and visit-aware UI.
 
-Archive runtime: `src/reel/archiveEngine.js`, `archiveAssets.js`, `explore.js`, `cloud.js`, `formations.js`.
+First entry: 3.25 s once assets have loaded; subsequent entries: 1.35 s; reduced motion: static archive without the camera flight. The intro can always be skipped. Works and video originals remain unchanged.
 
+The older `dither-flow.tsx` and `bloim-animation-background.tsx` files remain available for reference but are no longer loaded at runtime.
+
+## Verification
 ```bash
 yarn install
-yarn start
-yarn build
 yarn test:ci
+yarn build
 ```
 
-Deployment URL: https://showreel-kutuzov-v2.vercel.app
+GitHub Actions: `.github/workflows/archive-quality.yml` at the repository root. The production app is deployed from `main` to https://showreel-kutuzov-v2-kutuzov.vercel.app.
