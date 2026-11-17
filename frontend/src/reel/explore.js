@@ -24,6 +24,8 @@ export class Explore {
     this.drag = null;
     this.idle = 0;
     this.time = 0;
+    this.hoverClock = 0;
+    this.lookDirection = new THREE.Vector3();
     this.onHover = null;
   }
 
@@ -36,8 +38,8 @@ export class Explore {
     const dx = x - this.drag.x;
     const dy = y - this.drag.y;
     if (Math.abs(dx) + Math.abs(dy) > 0.004) this.drag.moved = true;
-    this.tYaw = this.drag.yaw - dx * 4;
-    this.tPitch = Math.max(-1.2, Math.min(1.35, this.drag.pitch + dy * 3));
+    this.tYaw = this.drag.yaw - dx * 5.5;
+    this.tPitch = Math.max(-1.2, Math.min(1.35, this.drag.pitch + dy * 4.25));
     this.idle = 0;
   }
 
@@ -48,7 +50,7 @@ export class Explore {
   }
 
   wheel(d) {
-    this.tDist = Math.max(5, Math.min(34, this.tDist * (1 + d * 0.0012)));
+    this.tDist = Math.max(5, Math.min(34, this.tDist * (1 + d * 0.0017)));
     this.idle = 0;
   }
 
@@ -56,8 +58,9 @@ export class Explore {
     const e = this.e;
     this.time += dt;
     this.idle += dt;
+    this.hoverClock+=dt;
     if (this.idle > 2.5 && !this.drag) this.tYaw += dt * 0.06;
-    const k = 1 - Math.exp(-dt * 5);
+    const k = 1 - Math.exp(-dt * 10);
     this.yaw += (this.tYaw - this.yaw) * k;
     this.pitch += (this.tPitch - this.pitch) * k;
     this.dist += (this.tDist - this.dist) * k;
@@ -76,12 +79,14 @@ export class Explore {
       const td = i === this.hover ? 1.08 : match ? 0.92 : 0.16;
       this.scales[i] += (ts - this.scales[i]) * (1 - Math.exp(-dt * 10));
       this.dims[i] += (td - this.dims[i]) * (1 - Math.exp(-dt * 8));
-      if (i === this.hover) this.o.p.addScaledVector(cam.getWorldDirection(new THREE.Vector3()), -0.6);
+      if (i === this.hover) this.o.p.addScaledVector(cam.getWorldDirection(this.lookDirection), -0.6);
       cloud.set(i, this.o.p, this.o.q, this.o.s * this.scales[i], this.dims[i]);
     });
     cloud.commit(e.scene.fog);
     cloud.meshes.forEach((m) => { m.boundingSphere = null; });
     cam.updateMatrixWorld();
+    if (this.hoverClock < 1/30) return;
+    this.hoverClock = 0;
     this.ray.setFromCamera(this.ndc, cam);
     const hits = this.ray.intersectObjects(cloud.meshes, false);
     let h = -1;

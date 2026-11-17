@@ -73,18 +73,14 @@ function logoTexture(img) {
 }
 
 function loadVideo(id) {
-  return new Promise((res) => {
-    const v = document.createElement("video");
-    v.src = `${BASE}/vid/${id}.mp4`;
-    v.muted = true;
-    v.loop = true;
-    v.playsInline = true;
-    v.preload = "auto";
-    const done = () => res(v);
-    v.addEventListener("loadeddata", done, { once: true });
-    v.addEventListener("error", done, { once: true });
-    v.load();
-  });
+  // Do not wait for every film to download before the gallery becomes interactive.
+  // The active V3 category starts playback on demand at 42.3 seconds.
+  const v=document.createElement("video");
+  v.muted=true;v.loop=true;v.playsInline=true;v.preload="none";
+  v.src=`${BASE}/vid/${id}.mp4`;
+  const tex=new THREE.VideoTexture(v);
+  tex.colorSpace=THREE.NoColorSpace;
+  return {el:v,tex};
 }
 
 export async function loadAssets(onProgress) {
@@ -114,12 +110,7 @@ export async function loadAssets(onProgress) {
     })),
     ...ids.map((id) => loadImage(`${BASE}/img/${pad3(id)}.webp`).then((img) => { tex[id] = toTexture(img); tick(); })),
     ...LOGOS.map((f, i) => loadImage(`${BASE}/logos/${f}`).then((img) => { logos[i] = logoTexture(img); tick(); })),
-    ...SEL.videos.map((id) => loadVideo(id).then((v) => {
-      const t = new THREE.VideoTexture(v);
-      t.colorSpace = THREE.NoColorSpace;
-      videos[id] = { el: v, tex: t };
-      tick();
-    })),
+    ...SEL.videos.map((id) => Promise.resolve().then(() => {videos[id]=loadVideo(id);tick();})),
   ]);
   return { catalog, atlases, tex, videos, logos, campaigns, campaignManifest };
 }

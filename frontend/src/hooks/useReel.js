@@ -1,173 +1,104 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ReelEngine } from "@/reel/engine";
-import { PortraitReelEngine } from "@/reel/portraitEngine";
-
-// Keep the reel functional when the hosting project has no backend env yet.
-// A configured API origin still wins; otherwise Vercel's same-origin functions
-// under /api handle narration and proxy the generated voice files.
-const BACKEND = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
-const API = `${BACKEND}/api`;
 
 export function useReel() {
-  const [version, setVersionState] = useState("v3");
-  const [format, setFormatState] = useState("wide");
-  const langRef = useRef("off");
-  const canvasRef = useRef(null);
-  const engineRef = useRef(null);
-  const [progress, setProgress] = useState(0);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState("");
-  const [time, setTime] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [lang, setLangState] = useState("off");
-  const [lines, setLines] = useState([]);
-  const [voLoading, setVoLoading] = useState(false);
-  const [recording, setRecording] = useState(null);
-  const [download, setDownload] = useState(null);
-  const downloadUrlRef = useRef(null);
-  useEffect(() => () => {
-    if (downloadUrlRef.current) URL.revokeObjectURL(downloadUrlRef.current);
-  }, []);
-  const [mode, setModeState] = useState("reel");
-  const [hover, setHover] = useState(null);
-  const [selected, setSelected] = useState(null);
-  const [filter, setFilterState] = useState("ALL");
+  const canvasRef=useRef(null);
+  const engineRef=useRef(null);
+  const [ready,setReady]=useState(false);
+  const [progress,setProgress]=useState(0);
+  const [error,setError]=useState("");
+  const [playing,setPlaying]=useState(false);
+  const [time,setTime]=useState(0);
+  const [mode,setModeState]=useState("reel");
+  const [hover,setHover]=useState(null);
+  const [selected,setSelected]=useState(null);
+  const [filter,setFilterState]=useState("ALL");
+  const [muted,setMuted]=useState(false);
 
-  // Soundtrack only: no voice assets are loaded or scheduled.
-  const loadVO = useCallback(async () => {
-    const eng = engineRef.current;
-    if (eng) await eng.setNarration(null);
-    setLines([]);
-    setError("");
-    setVoLoading(false);
-  }, []);
-  const [quality, setQuality] = useState("1080p");
-  const setQualityPreset = useCallback((preset) => {
-    if (!["720p", "1080p", "1440p", "2160p"].includes(preset)) return;
-    if (downloadUrlRef.current) URL.revokeObjectURL(downloadUrlRef.current);
-    downloadUrlRef.current = null;
-    setDownload(null);
-    setQuality(preset);
-  }, []);
+  useEffect(()=>{
+    const engine=new ReelEngine(canvasRef.current);
+    engineRef.current=engine;
+    let alive=true;
+    let lastUi=0;
+    engine.onTime=(next)=>{
+      if(next-lastUi>.10 || next<lastUi || next>=60){
+        lastUi=next; if(alive)setTime(next);
+      }
+    };
+    engine.onEnd=()=>alive&&setPlaying(false);
+    engine.load((p)=>alive&&setProgress(p))
+      .then(()=>{
+        if(!alive || !engine.explore)return;
+        engine.explore.onHover=(it)=>alive&&setHover(it);
+        setReady(true);
+      })
+      .catch((e)=>{if(alive)setError(e?.message||"Não foi possível abrir o arquivo 3D.");});
+    return ()=>{alive=false;engine.dispose();engineRef.current=null;};
+  },[]);
 
-  useEffect(() => {
-    const eng = format==="wide" ? new ReelEngine(canvasRef.current, version) : new PortraitReelEngine(canvasRef.current, format);
-    engineRef.current = eng;
-    window.__reel = eng;
-    eng.onTime = (t) => setTime(t);
-    eng.onEnd = () => setPlaying(false);
-    let alive = true;
-    eng.load((p) => alive && setProgress(p))
-      .then(() => alive && loadVO(langRef.current))
-      .then(() => { if (!alive || !eng.explore) return; eng.explore.onHover = (it) => setHover(it); setReady(true); })
-      .catch(() => alive && setError("Falha ao carregar os assets do showreel."));
-    return () => { alive = false; eng.dispose(); };
-  }, [loadVO, version, format]);
+  const setMode=useCallback((next)=>{
+    const engine=engineRef.current;
+    if(!engine||!engine.explore||!["reel","explore"].includes(next))return;
+    engine.setMode(next);
+    setPlaying(false);setSelected(null);setHover(null);setModeState(next);
+  },[]);
 
-  const toggle = useCallback(async () => {
-    const eng = engineRef.current;
-    if (!eng || !ready || recording !== null) return;
-    if (eng.playing) { eng.pause(); setPlaying(false); }
-    else { setModeState("reel"); setSelected(null); await eng.play(); setPlaying(true); }
-  }, [ready, recording]);
+  const toggle=useCallback(async()=>{
+    const engine=engineRef.current;
+    if(!engine||!engine.explore)return;
+    if(engine.playing){engine.pause();setPlaying(false);return;}
+    try{
+      await engine.play();
+      setModeState("reel");setSelected(null);setPlaying(true);
+    }catch(e){setError(e?.message||"Falha ao iniciar reprodução.");}
+  },[]);
 
-  const seek = useCallback((t) => {
-    const eng = engineRef.current;
-    if (recording !== null || !eng) return;
-    if (eng.mode !== "reel") { eng.setMode("reel"); setModeState("reel"); setSelected(null); }
-    eng.seek(t);
-  }, [recording]);
-  const restart = useCallback(async () => {
-    const eng = engineRef.current;
-    if (!eng || recording !== null) return;
-    setModeState("reel");
-    eng.seek(0);
-    if (!eng.playing) { await eng.play(); setPlaying(true); }
-  }, [recording]);
+  const restart=useCallback(async()=>{
+    const engine=engineRef.current;
+    if(!engine||!engine.explore)return;
+    engine.seek(0);
+    try{await engine.play();setModeState("reel");setSelected(null);setPlaying(true);}
+    catch(e){setError(e?.message||"Falha ao iniciar reprodução.");}
+  },[]);
 
-  const setLang = useCallback(async () => {
-    langRef.current = "off";
-    setLangState("off");
-    await loadVO();
-  }, [loadVO]);
+  const seek=useCallback((at)=>{
+    const engine=engineRef.current;
+    if(!engine||!engine.explore)return;
+    if(engine.mode!=="reel"){engine.setMode("reel");setModeState("reel");}
+    engine.seek(at);setTime(engine.t);
+  },[]);
 
-  const exportVideo = useCallback(async () => {
-    const eng = engineRef.current;
-    if (!eng || recording !== null) return;
-    if (downloadUrlRef.current) URL.revokeObjectURL(downloadUrlRef.current);
-    downloadUrlRef.current = null;
-    setDownload(null);
-    setModeState("reel");
-    setRecording(0);
-    setPlaying(true);
-    try {
-      const preset=format==="wide"?quality:format;
-      const { blob, ext, width, height, fps } = await eng.recordMp4(preset, (p) => setRecording(p));
-      const url = URL.createObjectURL(blob);
-      downloadUrlRef.current = url;
-      const label=format==="wide"?quality+"-16x9":format==="story"?
-        "stories-9x16-1080x1920":"feed-4x5-1080x1350";
-      const name="edmundo-kutuzov-"+version+"-instrumental-"+label+"."+ext;
-      // A fresh click is required: automatic downloads after 60s are often blocked.
-      setDownload({ url, name, size: blob.size, width, height, fps, quality:format==="wide"?quality:format });
-    } catch (e) {
-      setError(e.message || "A exportação falhou.");
-    } finally {
-      setRecording(null);
-      setPlaying(false);
-    }
-  }, [recording, version, quality, format]);
+  const toggleMute=useCallback(()=>{
+    const engine=engineRef.current;
+    if(!engine)return;
+    const next=!muted;
+    engine.score.master.gain.value=next?0:.9;
+    setMuted(next);
+  },[muted]);
 
-  const setMode = useCallback((m) => {
-    const eng = engineRef.current;
-    if (!eng || recording !== null) return;
-    eng.setMode(m);
-    setPlaying(false);
+  const setFilter=useCallback((next)=>{
+    const engine=engineRef.current;
+    if(!engine?.explore)return;
+    engine.explore.filter=next;
+    setFilterState(next);
     setSelected(null);
-    setHover(null);
-    setModeState(m);
-  }, [recording]);
+  },[]);
 
-  const setFilter = useCallback((f) => {
-    const eng = engineRef.current;
-    if (eng && eng.explore) eng.explore.filter = f;
-    setFilterState(f);
-  }, []);
+  const pointer=useCallback((type,x,y,extra)=>{
+    const engine=engineRef.current;
+    if(!engine?.explore)return;
+    if(engine.mode==="explore"){
+      const ex=engine.explore;
+      if(type==="move"){ex.pointer(x,y);ex.move(x,y);}
+      else if(type==="down"){ex.pointer(x,y);ex.down(x,y);}
+      else if(type==="up"){ex.pointer(x,y);const it=ex.up();if(it)setSelected(it);}
+      else if(type==="leave"){ex.pointer(9,9);ex.up();}
+      else if(type==="wheel")ex.wheel(extra);
+      else if(type==="key"){ex.tYaw+=x;ex.tPitch=Math.max(-1.2,Math.min(1.35,ex.tPitch+y));ex.idle=0;}
+    } else if(type==="move")engine.setParallax(x*2-1,-(y*2-1));
+    else if(type==="leave")engine.setParallax(0,0);
+  },[]);
 
-  const pointer = useCallback((type, nx, ny, extra) => {
-    const eng = engineRef.current;
-    if (!eng || !eng.explore) return;
-    if (eng.mode === "explore") {
-      const ex = eng.explore;
-      if (type === "move") { ex.pointer(nx, ny); ex.move(nx, ny); }
-      if (type === "down") ex.down(nx, ny);
-      if (type === "up") { const it = ex.up(); if (it) setSelected(it); }
-      if (type === "leave") { ex.pointer(9, 9); ex.up(); }
-      if (type === "wheel") ex.wheel(extra);
-    } else if (type === "move") eng.setParallax(nx * 2 - 1, -(ny * 2 - 1));
-    else if (type === "leave") eng.setParallax(0, 0);
-  }, []);
-
-  const setVersion = useCallback((v) => {
-    if (!["v1","v2","v3"].includes(v) || v === version || recording !== null) return;
-    if (downloadUrlRef.current) URL.revokeObjectURL(downloadUrlRef.current);
-    downloadUrlRef.current = null;
-    setReady(false); setPlaying(false); setError(""); setProgress(0); setDownload(null);
-    setTime(0); setModeState("reel"); setSelected(null);
-    if(v!=="v3")setFormatState("wide");
-    setVersionState(v);
-  }, [version, recording]);
-
-  const setFormat=useCallback((next)=>{
-    if(!["wide","story","feed"].includes(next)||recording!==null||
-       next===format||version!=="v3")return;
-    if(downloadUrlRef.current) URL.revokeObjectURL(downloadUrlRef.current);
-    downloadUrlRef.current=null;
-    setDownload(null);setReady(false);setPlaying(false);setError("");
-    setProgress(0);setTime(0);setModeState("reel");setSelected(null);
-    setFilterState("ALL");setFormatState(next);
-  },[format,version,recording]);
-
-  return { format, setFormat, quality, setQualityPreset, version, setVersion, duration: version === "v1" ? 52 : 60, mode, setMode, hover, selected, setSelected, filter, setFilter, pointer, canvasRef, progress, ready, error, setError, time, playing, toggle, seek, restart, lang, setLang, lines, voLoading, recording, exportVideo, download };
+  return {canvasRef,ready,progress,error,playing,time,duration:60,mode,setMode,
+    hover,selected,setSelected,filter,setFilter,pointer,toggle,restart,seek,muted,toggleMute};
 }
-

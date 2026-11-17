@@ -59,6 +59,8 @@ export class Cloud {
       return { a, j };
     });
     this.meshes.forEach((m) => { m.geometry.attributes.aCell.needsUpdate = true; });
+    this.reverseSlots=this.meshes.map((m)=>new Int32Array(m.count));
+    this.slot.forEach(({a,j},i)=>{this.reverseSlots[a][j]=i;});
     this.m = new THREE.Matrix4();
     this.s = new THREE.Vector3();
   }
@@ -82,7 +84,7 @@ export class Cloud {
 
   indexFromHit(mesh, instanceId) {
     const a = this.meshes.indexOf(mesh);
-    return this.slot.findIndex((s) => s.a === a && s.j === instanceId);
+    return a<0||instanceId==null?-1:this.reverseSlots[a][instanceId];
   }
 }
 

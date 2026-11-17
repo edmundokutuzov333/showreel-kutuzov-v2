@@ -3,14 +3,9 @@ import { W, H, DUR, C, bell } from "./core";
 import { loadAssets } from "./assets";
 import { createPost } from "./post";
 import { Cloud } from "./cloud";
-import { buildVoid } from "./intro";
-import { buildArchive } from "./archive";
-import { buildCinema, buildCorridor, buildRush } from "./cinema";
-import { buildClients, buildFinale } from "./outro";
 import { Explore } from "./explore";
 import { Score } from "./audio";
 import { buildCampaignFilm } from "./campaignFilm";
-import { buildEditorialStudy } from "./editorialStudy";
 
 const TRANS = [
   { t: 21.0, dir: [0, 0], amt: 0, w: 0.2, flash: 0.25 },
@@ -38,17 +33,22 @@ function makeDust() {
 }
 
 export class ReelEngine {
-  constructor(canvas, version = "v3") {
-    this.version = version;
-    this.duration = version === "v1" ? 52 : DUR;
+  constructor(canvas) {
+    this.version = "v3";
+    this.duration = DUR;
     this.canvas = canvas;
     const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
     r.setPixelRatio(1);
-    r.setSize(W, H, false);
+    // Match render resolution to the real display, avoiding off-screen 1080p work on phones.
+    const coarse=window.matchMedia?.("(pointer:coarse)")?.matches;
+    const displayWidth=window.innerWidth*Math.min(window.devicePixelRatio||1,1.35);
+    const scale=Math.min(1,Math.max(coarse?.4:.55,displayWidth/W));
+    const rw=Math.round(W*scale),rh=Math.round(H*scale);
+    r.setSize(rw,rh,false);
     r.outputColorSpace = THREE.LinearSRGBColorSpace;
     r.localClippingEnabled = true;
     this.renderer = r;
-    this.rt = new THREE.WebGLRenderTarget(W, H, { samples: 4 });
+    this.rt = new THREE.WebGLRenderTarget(rw, rh, { samples: 0 });
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(C.bg);
     this.scene.fog = new THREE.Fog(C.bg, 8, 40);
@@ -60,7 +60,7 @@ export class ReelEngine {
     this.hudCam = new THREE.OrthographicCamera(0, W, H, 0, -10, 10);
     this.post = createPost();
     this.score = new Score();
-    this.score.version = version;
+    this.score.version = "v3";
     this.t = 0;
     this.playing = false;
     this.recording = false;
@@ -79,11 +79,7 @@ export class ReelEngine {
     const A = this.A;
     this.cloud = new Cloud(A.catalog, A.atlases);
     this.scene.add(this.cloud.group);
-    this.scenes = this.version === "v3"
-      ? buildCampaignFilm(A,this.cloud)
-      : this.version === "v1"
-        ? buildEditorialStudy(A)
-        : [buildVoid(A), buildArchive(A, this.cloud), buildCinema(A), buildCorridor(A), buildRush(A), buildClients(A), buildFinale(A, this.cloud)];
+    this.scenes = buildCampaignFilm(A,this.cloud);
     this.scenes.forEach((s) => {
       if (s.group) this.scene.add(s.group);
       if (s.hud) this.hud.add(s.hud);
