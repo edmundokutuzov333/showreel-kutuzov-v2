@@ -1,0 +1,35 @@
+name: Archive quality gate
+on:
+  push:
+    branches: [main, "feat/aperture-awakens"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - name: Install Yarn
+        run: npm install -g yarn@1.22.22
+      - name: Install dependencies
+        run: yarn install --non-interactive --network-timeout 120000
+      - name: Run deterministic archive and intro tests
+        run: yarn test:ci
+      - name: Compile production bundle
+        run: yarn build
