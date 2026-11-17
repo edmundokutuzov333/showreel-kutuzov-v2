@@ -13,7 +13,7 @@ export class LivingFrames{
     this.blocked=new Set();this.hover=-1;this.dwell=0;this.active=-1;
     this.disposed=false;this.video=null;this.texture=null;this.material=null;
     this.geometry=new THREE.PlaneGeometry(.8,1);
-    this.mesh=null;this.token=0;
+    this.mesh=null;this.matte=null;this.matteMaterial=null;this.token=0;
     this.matrix=new THREE.Matrix4();this.position=new THREE.Vector3();
     this.quaternion=new THREE.Quaternion();this.scale=new THREE.Vector3();
     this.forward=new THREE.Vector3();this.offset=new THREE.Vector3();
@@ -48,12 +48,19 @@ export class LivingFrames{
       map:this.texture,side:THREE.DoubleSide,depthWrite:false,
       fog:true,toneMapped:false
     });
+    // Matte conceals the atlas poster when the live video has a different aspect ratio.
+    this.matteMaterial=new THREE.MeshBasicMaterial({
+      color:"#08101f",side:THREE.DoubleSide,depthWrite:false
+    });
+    this.matte=new THREE.Mesh(this.geometry,this.matteMaterial);
+    this.matte.renderOrder=2;this.matte.frustumCulled=false;this.matte.visible=false;
+    this.scene.add(this.matte);
     this.mesh=new THREE.Mesh(this.geometry,this.material);
     this.mesh.renderOrder=3;this.mesh.visible=false;this.mesh.frustumCulled=false;
     this.scene.add(this.mesh);
     video.onloadeddata=()=>{
       if(this.disposed||token!==this.token)return;
-      this.mesh.visible=true;
+      this.mesh.visible=true;this.matte.visible=true;
       this.updatePose(index);
     };
     video.onerror=()=>{
@@ -78,6 +85,12 @@ export class LivingFrames{
       :Number(this.cloud.items[index].ar)||.8;
     this.mesh.scale.x*=Math.max(.35,Math.min(2.2,aspect))/.8;
     this.mesh.translateZ(.019*this.scale.y);
+    if(this.matte){
+      this.matte.position.copy(this.position);
+      this.matte.quaternion.copy(this.quaternion);
+      this.matte.scale.copy(this.scale);
+      this.matte.translateZ(.013*this.scale.y);
+    }
     this.material.color.setScalar(Math.max(.3,
       this.cloud.meshes[a].geometry.attributes.aDim.getX(j)));
   }
@@ -107,9 +120,10 @@ export class LivingFrames{
       this.video.pause();this.video.onloadeddata=null;this.video.onerror=null;
       this.video.removeAttribute("src");this.video.load();
     }
-    this.mesh?.removeFromParent();
-    this.material?.dispose();this.texture?.dispose();
-    this.video=null;this.texture=null;this.material=null;this.mesh=null;this.active=-1;
+    this.mesh?.removeFromParent();this.matte?.removeFromParent();
+    this.material?.dispose();this.matteMaterial?.dispose();this.texture?.dispose();
+    this.video=null;this.texture=null;this.material=null;this.mesh=null;
+    this.matte=null;this.matteMaterial=null;this.active=-1;
   }
   dispose(){
     if(this.disposed)return;
