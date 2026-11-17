@@ -28,7 +28,7 @@ export function relatedWorks(items,item,limit=4){
 /** No forced orbit while examining a work or interacting with the canvas. */
 export function orbitalDrift(dt,{idle=0,hover=-1,dragging=false,selected=false,reduced=false}={}){
   if(reduced||selected||dragging||hover>=0||idle<7)return 0;
-  return Math.max(0,Math.min(.02,dt))*.38; // max 0.0076 radians/s
+  return Math.max(0,Math.min(.05,dt))*.008; // 0.008 radians/s: nearly imperceptible
 }
 
 /** Fade distant paintings gently without making any artwork invisible. */
