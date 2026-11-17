@@ -18,11 +18,11 @@ const Stage=forwardRef(function Stage({r},ref){
       if(!r.introComplete||!e.isPrimary||(e.button!==undefined&&e.button!==0))return;
       if(e.target.tagName!=="CANVAS"&&e.target!==e.currentTarget)return;
       e.currentTarget.setPointerCapture?.(e.pointerId);
-      r.pointer("down",...pos(e));
+      r.pointer("down",...pos(e),e.pointerType);
     }}
     onPointerUp={e=>{
       if(!r.introComplete||!e.isPrimary)return;
-      r.pointer("up",...pos(e));
+      r.pointer("up",...pos(e),e.pointerType);
       if(e.currentTarget.hasPointerCapture?.(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
     }}
     onPointerCancel={()=>r.pointer("leave",0,0)}
